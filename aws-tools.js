@@ -1,40 +1,10 @@
-// module.exports = {
-//     foo: function () {
-//         // whatever
-//     },
-//     bar: function () {
-//         // whatever
-//     }
-// };
-
-
-// #!/usr/bin/env node
-//
-// var commandLineArgs = require('command-line-args');
-//
-// var argv = require('yargs')
-//         .usage( "Usage: $0 [-c --vpc_list] [-g --vm_list]" )
-//         .option( "c", { alias: "vpc_list", demand: false, describe: "list VPCs", type: "boolean" } )
-//         .option( "g", { alias: "vm_list", demand: false, describe: "list  VMs", type: "boolean" } )
-//         .option( "C", { alias: "create_max_vms", demand: false, describe: "create VMs", type: "integer" } )
-//         .help( "?" )
-//         .alias( "?", "help" )
-//         .argv;
-
 var AWS  = require('aws-sdk');
 
 AWS.config.region = 'us-east-1';
 
 var ec2 = new AWS.EC2({apiVersion: '2015-10-01'});
+var util = require('util');
 
-
-// var min_vms = 1;
-// var max_vms = argv.C;
-// max_vms = 1;
-
-
-
-// launch_ec2_instances(min_vms,max_vms);
 
 // process.exit(1);
 
@@ -93,9 +63,8 @@ var ec2 = new AWS.EC2({apiVersion: '2015-10-01'});
 //     });
 // }
 
-module.exports = {
-    launch_ec2_instances: function (dry_run,max_vms) {
 
+exports.launch_instances = function (dry_run,max_vms) {
 
         console.log("max:"+max_vms);
 
@@ -109,7 +78,6 @@ module.exports = {
         };
 
         console.log("ec2: %o", ec2);
-        //    process.exit(1);
 
         ec2.runInstances(params, function(err, data) {
             if (err) { console.log("Could not create instance", err); return; }
@@ -120,7 +88,7 @@ module.exports = {
 
                 // Add tags to the instance
                 params = {Resources: [instanceId], Tags: [
-                {Key: 'Name', Value: 'my instance #' + i}
+                    {Key: 'Name', Value: 'my instance #' + i}
                 ]};
 
                 ec2.createTags(params, function(err) {
@@ -128,5 +96,42 @@ module.exports = {
                 });
             }
         });
-    }
+};
+
+exports.list_instances = function(debug) {
+
+    var params = {
+        Filters: [
+            {
+                Name: 'instance-state-name',
+                Values: ['stopped']
+            }
+        ]
+    };
+    ec2.describeInstances(params, function(err, data) {
+        if (err) console.log(err, err.stack); // an error occurred
+        else if (debug) {
+            console.log(util.inspect(data, {depth:null}));
+        }
+        else for( var item in data.Reservations) {
+            var instances = data.Reservations[item].Instances;
+            for ( var instance in instances) {
+                console.log(instances[instance].InstanceId);
+            }
+        }
+    });
+};
+
+exports.create_ec2_vpc = function() {
+
+    var vpc_params = {
+        CidrBlock: '10.0.0.0/24', //createVPC - /24=256 ip addresses
+        DryRun: false, //createVPC
+        InstanceTenancy: 'default' //createVPC
+    };
+
+    ec2.createVpc(vpc_params, function(err, vpc_data) {
+        if (err) console.log(err, err.stack); // an error occurred
+        else     console.log(vpc_data);           // successful response
+    });
 };
