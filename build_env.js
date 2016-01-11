@@ -8,7 +8,7 @@ var argv = require('yargs')
         .option( "d", { alias: "dry_run", demand: false, describe: "dry run", type: "boolean" } )
         .option( "D", { alias: "debug", demand: false, describe: "debug", type: "boolean" } )
         .help( "?" )
-        .alias( "?", "help" )
+        .alias( "h", "help" )
         .argv;
 
 
@@ -23,3 +23,5 @@ var aws_tools = require('./aws-tools');
 
 //aws_tools.launch_instances(dry_run, max_vms);
 aws_tools.list_instances(debug);
+//aws_tools.create_vpc();
+aws_tools.describe_vpc();

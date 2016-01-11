@@ -1,6 +1,7 @@
 var AWS  = require('aws-sdk');
 
 AWS.config.region = 'us-east-1';
+AWS.config.credentials = new AWS.SharedIniFileCredentials({ profile: '3m'});
 
 var ec2 = new AWS.EC2({apiVersion: '2015-10-01'});
 var util = require('util');
@@ -122,16 +123,31 @@ exports.list_instances = function(debug) {
     });
 };
 
-exports.create_ec2_vpc = function() {
+exports.create_vpc = function() {
 
-    var vpc_params = {
+    var params = {
         CidrBlock: '10.0.0.0/24', //createVPC - /24=256 ip addresses
         DryRun: false, //createVPC
         InstanceTenancy: 'default' //createVPC
     };
 
-    ec2.createVpc(vpc_params, function(err, vpc_data) {
+    ec2.createVpc(params, function(err, data) {
         if (err) console.log(err, err.stack); // an error occurred
-        else     console.log(vpc_data);           // successful response
+        else     console.log(data);           // successful response
+    });
+};
+
+
+exports.describe_vpc = function() {
+
+    var params = {
+        DryRun: false,
+//        Filters: [{ Name: '',Values: []}],
+//        VpcIds: [],
+    };
+
+    ec2.describeVpcs(params, function(err, data) {
+        if (err) console.log(err, err.stack); // an error occurred
+        else     console.log(data);           // successful response
     });
 };
